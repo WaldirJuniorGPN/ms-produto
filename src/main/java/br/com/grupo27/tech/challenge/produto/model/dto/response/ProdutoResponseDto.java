@@ -7,10 +7,10 @@ import br.com.grupo27.tech.challenge.produto.model.Produto;
 import java.time.LocalDateTime;
 
 
-public record ProdutoResponseDto(Integer id, String nome, String descricao, Categoria categoriaId,
+public record ProdutoResponseDto(Long id, String nome, String descricao, Categoria categoriaId,
                                  String sku, double preco, int quantidadeEstoque,
                                  double peso, Fabricante fabricanteId, boolean status,
-                                 LocalDateTime dataCriacao, String imagemPrincipalUrl,
+                                 String imagemPrincipalUrl,
                                  String imagensAdicionaisUrl, String tags,
                                  String urlAmigavel, String metaTitle,
                                  String metaDescrition) {
@@ -26,7 +26,7 @@ public record ProdutoResponseDto(Integer id, String nome, String descricao, Cate
           produto.getPeso(),
           produto.getFabricanteId(),
           produto.isStatus(),
-          produto.getDataCriacao(),
+
           produto.getImagemPrincipalUrl(),
           produto.getImagensAdicionaisUrl(),
           produto.getTags(),

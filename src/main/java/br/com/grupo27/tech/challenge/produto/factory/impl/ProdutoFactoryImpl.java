@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Qualifier("ProdutoFactory")
 @RequiredArgsConstructor
-public class ParodutoFactoryImpl implements EntityFactory<Produto, ProdutoRequestDto> {
+public class ProdutoFactoryImpl implements EntityFactory<Produto, ProdutoRequestDto> {
     @Override
     public Produto criar(ProdutoRequestDto dto) {
         var produto = new Produto();
@@ -23,7 +23,7 @@ public class ParodutoFactoryImpl implements EntityFactory<Produto, ProdutoReques
         produto.setPeso(dto.peso());
         produto.setFabricanteId(dto.fabricanteId());
         produto.setStatus(dto.status());
-        produto.setDataCriacao(dto.dataCriacao());
+      //  produto.setDataCriacao(dto.dataCriacao());
         produto.setImagemPrincipalUrl(dto.imagemPrincipalUrl());
         produto.setImagensAdicionaisUrl(dto.imagensAdicionaisUrl());
         produto.setTags(dto.tags());
@@ -63,9 +63,9 @@ public class ParodutoFactoryImpl implements EntityFactory<Produto, ProdutoReques
         if(produto.isStatus() != dto.status()) {
             produto.setStatus(dto.status());
         }
-        if(produto.getDataCriacao() != dto.dataCriacao()) {
-            produto.setDataCriacao(dto.dataCriacao());
-        }
+//        if(produto.getDataCriacao() != dto.dataCriacao()) {
+//            produto.setDataCriacao(dto.dataCriacao());
+//        }
         if(produto.getImagemPrincipalUrl() != dto.imagemPrincipalUrl()) {
             produto.setImagemPrincipalUrl(dto.imagemPrincipalUrl());
         }
