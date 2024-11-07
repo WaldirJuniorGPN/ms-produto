@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
-
+import org.springframework.test.context.ActiveProfiles;
 
 
 import static br.com.grupo27.tech.challenge.produto.mock.ProdutoDados.*;
@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
 @AutoConfigureTestDatabase
+@ActiveProfiles("test")
 @Transactional
 public class ProdutoServiceImplt {
 

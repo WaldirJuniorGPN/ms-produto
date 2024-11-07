@@ -92,7 +92,7 @@ public interface ProdutoDados {
     static ProdutoRequestDto getProdutoAlteracaoRequestDto(){
         var produto = getProduto();
         produto.setId(1L);
-        produto.setNome(" Produto Dados de Alteracao");
+        produto.setNome("Produto Dados de Alteracao");
         produto.setPreco(699.99);
         var produtoRequestDto = new ProdutoRequestDto(produto.getId(),
                 produto.getNome(),
