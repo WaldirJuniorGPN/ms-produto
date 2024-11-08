@@ -1,103 +1,142 @@
 package br.com.grupo27.tech.challenge.produto.Controller;
 
+import br.com.grupo27.tech.challenge.produto.controller.ProdutoController;
 import br.com.grupo27.tech.challenge.produto.model.dto.request.ProdutoRequestDto;
 import br.com.grupo27.tech.challenge.produto.model.dto.response.ProdutoResponseDto;
 import br.com.grupo27.tech.challenge.produto.service.ProdutoService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.util.List;
+import java.util.Collections;
 
 import static br.com.grupo27.tech.challenge.produto.mock.ProdutoDados.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-@SpringBootTest
+@WebMvcTest(ProdutoController.class)
 @ActiveProfiles("test")
-@AutoConfigureMockMvc
 public class ProdutoControllerIt {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
-    private ProdutoService service;
+    private ProdutoService produtoService;
 
+    @MockBean
+    private JobLauncher jobLauncher;
+
+    @MockBean
+    private Job job;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private ProdutoResponseDto responseDto;
+    private ProdutoRequestDto requestDto;
+
+    @BeforeEach
+    void setUp() {
+        requestDto = getProdutoRequestDto();
+        responseDto = getProdutoResponseDto();
+    }
 
     @Test
-    void deverPermitirCriarProduto() throws Exception {
+    void cadastrarProduto() throws Exception {
 
-        when(service.cadastrar(any(ProdutoRequestDto.class))).thenReturn(getProdutoResponseDto());
+        when(produtoService.cadastrar(any(ProdutoRequestDto.class))).thenReturn(responseDto);
 
-
-        mockMvc.perform(MockMvcRequestBuilders.post("/produtos")
+        mockMvc.perform(post("/produtos")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(asJsonString(getProdutoRequestDto())))
-                .andExpect(status().isCreated());
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "/produtos/1"))
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.nome").value("Produto Dados"))
+                .andExpect(jsonPath("$.preco").value(100.00))
+                .andExpect(jsonPath("$.quantidade").value(10));
     }
 
     @Test
-    void deverPermitirBuscarTodosProduto() throws Exception {
-        List<ProdutoResponseDto> produtos = List.of(getProdutoResponseDto(), getProdutoResponseDto2());
-        var produtosPage = new PageImpl<>(produtos);
+    void buscarTodosProdutos() throws Exception {
+        Page<ProdutoResponseDto> produtos = new PageImpl<>(
+                Collections.singletonList(responseDto),
+                PageRequest.of(0, 10),
+                1
+        );
 
-        when(service.buscarTodos(any())).thenReturn(produtosPage);
+        when(produtoService.buscarTodos(any(PageRequest.class))).thenReturn(produtos);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/produtos")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-
+        mockMvc.perform(get("/produtos").param("page", "0").param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].nome").value("Produto Dados"));
     }
 
     @Test
-    void deverPermitirBuscarProdutoPorId() throws Exception {
-        var id = 1L;
-        when(service.buscarPorId(id)).thenReturn(getProdutoResponseDto());
+    void buscarProdutoPorId() throws Exception {
+        when(produtoService.buscarPorId(1L)).thenReturn(responseDto);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/produtos/{id}", id)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-
-    }
-
-
-    @Test
-    void deverPermitirAtualizarProduto() throws Exception {
-        var id = 1L;
-        var produtoRequestDto = getProdutoRequestDto();
-        when(service.atualizar(id, produtoRequestDto )).thenReturn(getProdutoResponseDto());
-
-        mockMvc.perform(MockMvcRequestBuilders.put("/produtos/{id}", id)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(asJsonString(produtoRequestDto)))
-                .andExpect(status().isOk());
+        mockMvc.perform(get("/produtos/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.nome").value("Produto Dados"));
     }
 
     @Test
-    void deverPermitirRemoverProduto() throws Exception {
-        var id = 1L;
-        Mockito.doNothing().when(service).remover(id);
+    void atualizarProduto() throws Exception {
 
-        mockMvc.perform(MockMvcRequestBuilders.delete("/produtos/{id}",id))
+        when(produtoService.atualizar(any(Long.class), any(ProdutoRequestDto.class))).thenReturn(responseDto);
+
+        mockMvc.perform(put("/produtos/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.nome").value("Produto Atualizado"))
+                .andExpect(jsonPath("$.preco").value(150.0))
+                .andExpect(jsonPath("$.quantidade").value(20));
+    }
+
+    @Test
+    void deletarProduto() throws Exception {
+        doNothing().when(produtoService).remover(1L);
+
+        mockMvc.perform(delete("/produtos/1"))
                 .andExpect(status().isNoContent());
     }
 
+    @Test
+    void atualizarEstoqueProduto() throws Exception {
 
+        when(produtoService.atualizarEstoque(1L, 50)).thenReturn(responseDto);
 
-    public static String asJsonString(final Object object) throws JsonProcessingException {
-        return new ObjectMapper().writeValueAsString(object);
+        mockMvc.perform(put("/produtos/atualizar/estoque/1/50"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.quantidade").value(50));
+    }
+
+    @Test
+    void importaArquivo() throws Exception {
+        doNothing().when(jobLauncher).run(any(Job.class), any());
+
+        mockMvc.perform(get("/produtos/importacao"))
+                .andExpect(status().isOk());
     }
 }

@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 
 public record ProdutoRequestDto(
 
-        Long id,
         @NotBlank(message = "o campo nome não pode ser nulo")
         String nome,
         String descricao,

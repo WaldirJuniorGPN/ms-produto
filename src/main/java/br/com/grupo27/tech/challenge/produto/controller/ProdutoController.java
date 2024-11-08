@@ -3,6 +3,7 @@ package br.com.grupo27.tech.challenge.produto.controller;
 import br.com.grupo27.tech.challenge.produto.model.dto.request.ProdutoRequestDto;
 import br.com.grupo27.tech.challenge.produto.model.dto.response.ProdutoResponseDto;
 import br.com.grupo27.tech.challenge.produto.service.ProdutoService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
@@ -34,7 +35,7 @@ public class ProdutoController {
     private Job job;
 
     @PostMapping
-    public ResponseEntity<ProdutoResponseDto> cadastrar(@RequestBody ProdutoRequestDto dto,
+    public ResponseEntity<ProdutoResponseDto> cadastrar(@RequestBody @Valid ProdutoRequestDto dto,
                                                         UriComponentsBuilder uriBuilder) {
         var produtoResponseDto = produtoService.cadastrar(dto);
         var uri = uriBuilder.path("/produtos/{id}")

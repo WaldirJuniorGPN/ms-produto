@@ -70,6 +70,7 @@ public class ImpotacaoJobConfiguration {
                 .name("leitura-csv")
                 .resource(new FileSystemResource("src\\main\\resources\\produtos.csv"))
                 .comments("--")
+                .linesToSkip(1)
                 .delimited()
                 .delimiter(";")
                 .names("nome","descricao","sku","preco","quantidadeEstoque","peso")
