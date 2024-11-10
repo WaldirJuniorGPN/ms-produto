@@ -15,5 +15,4 @@ public class ApplicationConfig {
         filter.setForceEncoding(true);
         return filter;
     }
-
 }

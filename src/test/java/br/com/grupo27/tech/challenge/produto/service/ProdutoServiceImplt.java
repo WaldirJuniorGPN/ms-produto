@@ -3,148 +3,123 @@ package br.com.grupo27.tech.challenge.produto.service;
 
 import br.com.grupo27.tech.challenge.produto.exception.ControllerPropertyReferenceException;
 import br.com.grupo27.tech.challenge.produto.model.Produto;
-import br.com.grupo27.tech.challenge.produto.model.dto.response.ProdutoResponseDto;
+import br.com.grupo27.tech.challenge.produto.model.dto.request.ProdutoRequestDto;
 import br.com.grupo27.tech.challenge.produto.repository.ProdutoRepository;
 import br.com.grupo27.tech.challenge.produto.service.impl.ProdutoServiceImpl;
 import jakarta.transaction.Transactional;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 
-
 import static br.com.grupo27.tech.challenge.produto.mock.ProdutoDados.*;
-import static org.assertj.core.api.Assertions.*;
-
+import static br.com.grupo27.tech.challenge.produto.utils.ConstantesUtils.PRODUTO_NAO_ENCOTRADO;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 @SpringBootTest
-@AutoConfigureTestDatabase
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 @ActiveProfiles("test")
 @Transactional
 public class ProdutoServiceImplt {
-
-    private Produto produtoSalvo;
-    private Long idProdutoSalvo;
 
     @Autowired
     private ProdutoRepository repository;
 
     @Autowired
-    private ProdutoServiceImpl service;
+    private ProdutoServiceImpl produtoService;
 
-    AutoCloseable openMock;
+    private ProdutoRequestDto produtoRequestDto;
 
     @BeforeEach
     void setUp() {
-        openMock = MockitoAnnotations.openMocks(this);
-
-        produtoSalvo = repository.save(getProduto());
-        repository.save(getProduto2());
-        idProdutoSalvo= produtoSalvo.getId();
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-
-        openMock.close();
-    }
-
-
-    @Test
-    void deverPermitirCriarProduto(){
-        var produtoRequest = getProdutoRequestDto();
-
-        var result = service.cadastrar(produtoRequest);
-
-        assertThat(result).isNotNull().isInstanceOf(ProdutoResponseDto.class);
-        assertThat(result.id()).isNotNull();
-
+        produtoRequestDto = getProdutoRequestDto();
     }
 
     @Test
-    void deverPermitirBuscarTodosProduto(){
-       var pageRequest = PageRequest.of(0,10);
+    void testCadastrarProduto() {
+        var response = produtoService.cadastrar(produtoRequestDto);
 
-       var result = service.buscarTodos(pageRequest);
-
-       assertThat(result)
-               .isNotNull()
-               .hasSize(2);
+        assertNotNull(response);
+        assertEquals(produtoRequestDto.nome(), response.nome());
     }
 
+    void testBuscarTodos() {
+        var produto = getProduto();
+        produto.setId(null);
+        repository.save(produto);
 
-    @Test
-    public void deveBuscarProdutoPorId() {
-        var id = idProdutoSalvo;
+        var pageRequest = PageRequest.of(0, 10);
 
-        var result = service.buscarPorId(id);
+        var page = produtoService.buscarTodos(pageRequest);
 
-        assertThat(result).isNotNull();
-        assertThat(result.id()).isEqualTo(id);
-        assertThat(result.nome()).isEqualTo(produtoSalvo.getNome());
+        assertNotNull(page);
+        assertEquals(1, page.getTotalElements());
     }
 
-    @Test
-    void deveGerarExcecao_QuandoBuscarProdutoPorId_IdNaoExiste(){
-        var id =1L;
+    void testBuscarPorId_ProdutoExistente() {
+        var responseDto = produtoService.cadastrar(produtoRequestDto);
 
-        assertThatThrownBy(
-                () -> service.buscarPorId(id))
-                .isInstanceOf(ControllerPropertyReferenceException.class)
-                .hasMessage("Produto não encontrado");
-    }
+        var foundProduto = produtoService.buscarPorId(responseDto.id());
 
-
-    @Test
-    void deverPermitirAtualizarProduto(){
-
-
-        var id = idProdutoSalvo;
-        var produtoRequestDto = getProdutoAlteracaoRequestDto();
-
-        var result = service.atualizar(id, produtoRequestDto);
-
-        assertThat(result)
-                .isNotNull()
-                .isInstanceOf(ProdutoResponseDto.class);
-        assertThat(result.id()).isEqualTo(id);
-        assertThat(result.nome()).isEqualTo(" Produto Dados de Alteracao");
-
+        assertNotNull(foundProduto);
+        assertEquals(responseDto.id(), foundProduto.id());
     }
 
     @Test
-    void deveGerarExcecao_QuandoAtualizarProduto_IdNaoExiste(){
-        var id = 1L;
+    void testBuscarPorId_ProdutoNaoExistente() {
+        var exception = assertThrows(
+                ControllerPropertyReferenceException.class,
+                () -> produtoService.buscarPorId(999L)
+        );
+        assertEquals(PRODUTO_NAO_ENCOTRADO, exception.getMessage());
+    }
 
-        assertThatThrownBy(
-                () -> service.buscarPorId(id))
-                .isInstanceOf(ControllerPropertyReferenceException.class)
-                .hasMessage("Produto não encontrado");
+    void testAtualizarProduto() {
+        var responseDto = produtoService.cadastrar(produtoRequestDto);
+
+        var updateDto = getProdutoAlteracaoRequestDto();
+
+        var updatedProduto = produtoService.atualizar(responseDto.id(), updateDto);
+
+        assertNotNull(updatedProduto);
+        assertEquals("Produto Atualizado", updatedProduto.nome());
+        assertEquals(699.99, updatedProduto.preco());
+    }
+
+    void testRemoverProduto() {
+        var responseDto = produtoService.cadastrar(produtoRequestDto);
+        var id = responseDto.id();
+
+        produtoService.remover(id);
+
+        var exception = assertThrows(
+                ControllerPropertyReferenceException.class,
+                () -> produtoService.buscarPorId(id)
+        );
+        assertEquals(PRODUTO_NAO_ENCOTRADO, exception.getMessage());
+    }
+
+    void testAtualizarEstoque() {
+        var responseDto = produtoService.cadastrar(produtoRequestDto);
+        var id = responseDto.id();
+        int quantidade = 3;
+
+        var updatedProduto = produtoService.atualizarEstoque(id, quantidade);
+
+        assertNotNull(updatedProduto);
+        assertEquals(produtoRequestDto.quantidadeEstoque() - quantidade, updatedProduto.quantidadeEstoque());
     }
 
     @Test
-    void deverPermitirRemoverProduto(){
-
-        var id = idProdutoSalvo;
-
-        service.remover(id);
-
-        assertThat(getProduto().getId()).isNotNull();
-    }
-
-    @Test
-    void deveGerarExcecao_QuandoRemover_IdNaoExiste(){
-        var id = 1L;
-
-        assertThatThrownBy(
-                () -> service.buscarPorId(id))
-                .isInstanceOf(ControllerPropertyReferenceException.class)
-                .hasMessage("Produto não encontrado");
+    void testAtualizarEstoque_ProdutoNaoExistente() {
+        var exception = assertThrows(
+                ControllerPropertyReferenceException.class,
+                () -> produtoService.atualizarEstoque(999L, 5)
+        );
+        assertEquals(PRODUTO_NAO_ENCOTRADO, exception.getMessage());
     }
 }

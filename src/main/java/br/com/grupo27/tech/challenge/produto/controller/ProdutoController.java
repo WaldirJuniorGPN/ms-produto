@@ -45,14 +45,14 @@ public class ProdutoController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<ProdutoResponseDto>> buscarTodos(@PageableDefault(size = 10, page = 0) Pageable pageable){
+    public ResponseEntity<Page<ProdutoResponseDto>> buscarTodos(@PageableDefault(size = 10, page = 0) Pageable pageable) {
         var produtoResponseDtos = produtoService.buscarTodos(pageable);
 
         return ResponseEntity.ok(produtoResponseDtos);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProdutoResponseDto> buscarPorId(@PathVariable Long id){
+    public ResponseEntity<ProdutoResponseDto> buscarPorId(@PathVariable Long id) {
         var produtoResponseDto = produtoService.buscarPorId(id);
 
         return ResponseEntity.ok(produtoResponseDto);
@@ -60,7 +60,7 @@ public class ProdutoController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ProdutoResponseDto> atualizar(@PathVariable Long id,
-                                                        @RequestBody ProdutoRequestDto dto){
+                                                        @RequestBody ProdutoRequestDto dto) {
 
         var produtoResponseDto = produtoService.atualizar(id, dto);
 
@@ -74,16 +74,16 @@ public class ProdutoController {
         produtoService.remover(id);
     }
 
-    @PutMapping("/atualizar/estoque/{id}/{quantidade}")
-    public ResponseEntity<ProdutoResponseDto> atualizarEstoue(@PathVariable Long id, @PathVariable int quantidade){
+    @PatchMapping("/atualizar/estoque/{id}/{quantidade}")
+    public ResponseEntity<ProdutoResponseDto> atualizarEstoue(@PathVariable Long id, @PathVariable Integer quantidade) {
 
         var produtoResponseDto = produtoService.atualizarEstoque(id, quantidade);
 
-        return  ResponseEntity.ok(produtoResponseDto);
+        return ResponseEntity.ok(produtoResponseDto);
     }
 
     @GetMapping("/importacao")
-    public  void importaArquivo() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+    public void importaArquivo() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
         JobParameters jobParameters = new JobParameters();
         jobLauncher.run(job, jobParameters);
     }

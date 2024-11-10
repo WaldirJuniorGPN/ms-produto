@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -23,8 +24,7 @@ import java.util.Collections;
 
 import static br.com.grupo27.tech.challenge.produto.mock.ProdutoDados.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -65,11 +65,11 @@ public class ProdutoControllerIt {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/produtos/1"))
+                .andExpect(header().string("Location", "http://localhost/produtos/1"))
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.nome").value("Produto Dados"))
                 .andExpect(jsonPath("$.preco").value(100.00))
-                .andExpect(jsonPath("$.quantidade").value(10));
+                .andExpect(jsonPath("$.quantidadeEstoque").value(10));
     }
 
     @Test
@@ -101,16 +101,18 @@ public class ProdutoControllerIt {
     @Test
     void atualizarProduto() throws Exception {
 
-        when(produtoService.atualizar(any(Long.class), any(ProdutoRequestDto.class))).thenReturn(responseDto);
+        var produtoAtualizado = getProdutoAlteracaoRequestDto();
+        var responseAtualizado = getProdutoAlteracaoResponseDto();
+
+        when(produtoService.atualizar(any(Long.class), any(ProdutoRequestDto.class))).thenReturn(responseAtualizado);
 
         mockMvc.perform(put("/produtos/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto)))
+                        .content(objectMapper.writeValueAsString(produtoAtualizado)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.nome").value("Produto Atualizado"))
-                .andExpect(jsonPath("$.preco").value(150.0))
-                .andExpect(jsonPath("$.quantidade").value(20));
+                .andExpect(jsonPath("$.nome").value("Produto Dados de Alteracao"))
+                .andExpect(jsonPath("$.preco").value(699.99));
     }
 
     @Test
@@ -126,17 +128,18 @@ public class ProdutoControllerIt {
 
         when(produtoService.atualizarEstoque(1L, 50)).thenReturn(responseDto);
 
-        mockMvc.perform(put("/produtos/atualizar/estoque/1/50"))
+        mockMvc.perform(patch("/produtos/atualizar/estoque/1/50"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.quantidade").value(50));
+                .andExpect(jsonPath("$.quantidadeEstoque").value(10));
     }
 
     @Test
     void importaArquivo() throws Exception {
-        doNothing().when(jobLauncher).run(any(Job.class), any());
+        when(jobLauncher.run(any(Job.class), any())).thenReturn(mock(JobExecution.class));
 
         mockMvc.perform(get("/produtos/importacao"))
                 .andExpect(status().isOk());
     }
+
 }

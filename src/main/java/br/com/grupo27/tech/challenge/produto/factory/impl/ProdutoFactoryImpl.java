@@ -7,6 +7,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
+import java.util.List;
+
+import static br.com.grupo27.tech.challenge.produto.utils.UpdateUtils.atualizarCampo;
+
 @Component
 @Qualifier("ProdutoFactory")
 @RequiredArgsConstructor
@@ -23,7 +28,6 @@ public class ProdutoFactoryImpl implements EntityFactory<Produto, ProdutoRequest
         produto.setPeso(dto.peso());
         produto.setFabricanteId(dto.fabricanteId());
         produto.setStatus(dto.status());
-      //  produto.setDataCriacao(dto.dataCriacao());
         produto.setImagemPrincipalUrl(dto.imagemPrincipalUrl());
         produto.setImagensAdicionaisUrl(dto.imagensAdicionaisUrl());
         produto.setTags(dto.tags());
@@ -35,58 +39,22 @@ public class ProdutoFactoryImpl implements EntityFactory<Produto, ProdutoRequest
 
     @Override
     public void atualizar(Produto produto, ProdutoRequestDto dto) {
-
-        if(!produto.getNome().equals(dto.nome())) {
-            produto.setNome(dto.nome());
-        }
-        if(!produto.getDescricao().equals(dto.descricao())) {
-            produto.setDescricao(dto.descricao());
-        }
-        if(!produto.getCategoriaId().equals(dto.categoriaId())) {
-            produto.setCategoriaId(dto.categoriaId());
-        }
-        if(!produto.getSku().equals(dto.sku())) {
-            produto.setSku(dto.sku());
-        }
-        if (produto.getPreco() != dto.preco()) {
-            produto.setPreco(dto.preco());
-        }
-        if (produto.getFabricanteId() != dto.fabricanteId()) {
-            produto.setFabricanteId(dto.fabricanteId());
-        }
-        if(produto.getQuantidadeEstoque() != dto.quantidadeEstoque()) {
-            produto.setQuantidadeEstoque(dto.quantidadeEstoque());
-        }
-        if(produto.getPeso() != dto.peso()) {
-            produto.setPeso(dto.peso());
-        }
-        if(produto.isStatus() != dto.status()) {
-            produto.setStatus(dto.status());
-        }
-//        if(produto.getDataCriacao() != dto.dataCriacao()) {
-//            produto.setDataCriacao(dto.dataCriacao());
-//        }
-        if(produto.getImagemPrincipalUrl() != dto.imagemPrincipalUrl()) {
-            produto.setImagemPrincipalUrl(dto.imagemPrincipalUrl());
-        }
-        if(produto.getTags() != dto.tags()) {
-            produto.setTags(dto.tags());
-        }
-        if(produto.getMetaTitle() != dto.metaTitle()) {
-            produto.setMetaTitle(dto.metaTitle());
-        }
-        if(produto.getMetaDescrition() != dto.metaDescrition()) {
-            produto.setMetaDescrition(dto.metaDescrition());
-        }
-        if(produto.getUrlAmigavel() != dto.urlAmigavel()) {
-            produto.setUrlAmigavel(dto.urlAmigavel());
-        }
-        if(produto.getMetaTitle() != dto.metaTitle()) {
-            produto.setMetaTitle(dto.metaTitle());
-        }
-        if(produto.getMetaDescrition() != dto.metaDescrition()) {
-            produto.setMetaDescrition(dto.metaDescrition());
-        }
-
+        List<Runnable> updates = Arrays.asList(
+                () -> atualizarCampo(produto::getNome,   produto::setNome, dto.nome()),
+                () -> atualizarCampo(produto::getDescricao, produto::setDescricao, dto.descricao()),
+                () -> atualizarCampo(produto::getCategoriaId, produto::setCategoriaId, dto.categoriaId()),
+                () -> atualizarCampo(produto::getSku, produto::setSku, dto.sku()),
+                () -> atualizarCampo(produto::getPreco, produto::setPreco, dto.preco()),
+                () -> atualizarCampo(produto::getFabricanteId, produto::setFabricanteId, dto.fabricanteId()),
+                () -> atualizarCampo(produto::getPeso, produto::setPeso, dto.peso()),
+                () -> atualizarCampo(produto::getQuantidadeEstoque, produto::setQuantidadeEstoque, dto.quantidadeEstoque()),
+                () -> atualizarCampo(produto::isStatus, produto::setStatus, dto.status()),
+                () -> atualizarCampo(produto::getImagemPrincipalUrl, produto::setImagemPrincipalUrl, dto.imagemPrincipalUrl()),
+                () -> atualizarCampo(produto::getTags, produto::setTags, dto.tags()),
+                () -> atualizarCampo(produto::getMetaTitle, produto::setMetaTitle, dto.metaTitle()),
+                () -> atualizarCampo(produto::getMetaDescrition, produto::setMetaDescrition, dto.metaDescrition()),
+                () -> atualizarCampo(produto::getUrlAmigavel, produto::setUrlAmigavel, dto.urlAmigavel())
+        );
+        updates.forEach(Runnable::run);
     }
 }

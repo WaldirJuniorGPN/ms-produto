@@ -32,21 +32,20 @@ public class ProdutoServiceImpl implements ProdutoService {
 
     @Override
     public Page<ProdutoResponseDto> buscarTodos(Pageable pageable) {
-         Page<Produto> pageProduto = repository.findAll(pageable);
-         return pageProduto.map(produto -> new ProdutoResponseDto(produto));
+        Page<Produto> pageProduto = repository.findAll(pageable);
+        return pageProduto.map(ProdutoResponseDto::new);
     }
 
     @Override
     public ProdutoResponseDto buscarPorId(Long id) {
-        var produto = repository.findById(id)
+        return repository.findById(id)
                 .map(ProdutoResponseDto::new)
-                .orElseThrow(() -> throwPropertyReferenceException());
-        return produto;
+                .orElseThrow(this::throwPropertyReferenceException);
     }
 
 
     @Override
-    public ProdutoResponseDto atualizar(Long id,  ProdutoRequestDto dto) {
+    public ProdutoResponseDto atualizar(Long id, ProdutoRequestDto dto) {
         var produtoASerAlterado = repository.findById(id).orElseThrow(this::throwPropertyReferenceException);
         factory.atualizar(produtoASerAlterado, dto);
         repository.save(produtoASerAlterado);
@@ -62,7 +61,7 @@ public class ProdutoServiceImpl implements ProdutoService {
     @Override
     public ProdutoResponseDto atualizarEstoque(Long id, int quantidade) {
         var produto = repository.findById(id).orElseThrow(this::throwPropertyReferenceException);
-        produto.setQuantidadeEstoque(produto.getQuantidadeEstoque() - quantidade) ;
+        produto.setQuantidadeEstoque(produto.getQuantidadeEstoque() - quantidade);
         return new ProdutoResponseDto(produto);
     }
 

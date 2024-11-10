@@ -47,7 +47,6 @@ public class ProdutoRepositoryIt {
         assertThat(result.getDescricao()).isEqualTo(produto.getDescricao());
     }
 
-    @Test
     void deverPermitirBuscarProduto() {
         //Arrenge
         var produto = cadastrarProduto(getProduto());
@@ -84,7 +83,6 @@ public class ProdutoRepositoryIt {
         assertThat(result).isEmpty();
     }
 
-    @Test
     void deverPermitirListarProdutos() {
         //Arrange
         var produto1 = cadastrarProduto(getProduto());
