@@ -48,14 +48,25 @@ Além disso, o serviço oferece uma funcionalidade de carga de produtos, permiti
 
 4. Se preferir, utilize Docker para subir o banco de dados relacional (MySQL, por exemplo).
 
-```
 
-## Testes
+ Testes
 
 O microsserviço possui testes unitários e de integração para validar o comportamento de suas principais funcionalidades.
 
-### Executar os Testes
+Executar os testes unitários:
 
 ```bash
 mvn test
+```
+
+Executar os testes integrados:
+
+```bash
+mvn test - P integration-test
+```
+
+Executar os testes de sistemas:
+
+```bash
+mvn test - P system-test
 ```

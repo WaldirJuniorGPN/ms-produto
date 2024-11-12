@@ -12,11 +12,11 @@ public interface ProdutoService {
 
     Page<ProdutoResponseDto> buscarTodos(Pageable pageable);
 
-    ProdutoResponseDto buscarPorId(Integer id);
+    ProdutoResponseDto buscarPorId(Long id);
 
-    ProdutoResponseDto atualizar(Integer id, ProdutoRequestDto dto);
+    ProdutoResponseDto atualizar(Long id, ProdutoRequestDto dto);
 
-    void remover(Integer id);
+    void remover(Long id);
 
-    ProdutoResponseDto atualizarEstoque(Integer id, int quantidade);
+    ProdutoResponseDto atualizarEstoque(Long id, int quantidade);
 }

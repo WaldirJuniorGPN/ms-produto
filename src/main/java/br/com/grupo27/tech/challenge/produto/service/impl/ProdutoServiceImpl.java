@@ -32,20 +32,20 @@ public class ProdutoServiceImpl implements ProdutoService {
 
     @Override
     public Page<ProdutoResponseDto> buscarTodos(Pageable pageable) {
-         Page<Produto> pageProduto = repository.findAll(pageable);
-         return pageProduto.map(produto -> new ProdutoResponseDto(produto));
-
-
+        Page<Produto> pageProduto = repository.findAll(pageable);
+        return pageProduto.map(ProdutoResponseDto::new);
     }
 
     @Override
-    public ProdutoResponseDto buscarPorId(Integer id) {
-        var produto = repository.findById(id).orElseThrow(this::throwPropertyReferenceException);
-        return new ProdutoResponseDto(produto);
+    public ProdutoResponseDto buscarPorId(Long id) {
+        return repository.findById(id)
+                .map(ProdutoResponseDto::new)
+                .orElseThrow(this::throwPropertyReferenceException);
     }
 
+
     @Override
-    public ProdutoResponseDto atualizar(Integer id, ProdutoRequestDto dto) {
+    public ProdutoResponseDto atualizar(Long id, ProdutoRequestDto dto) {
         var produtoASerAlterado = repository.findById(id).orElseThrow(this::throwPropertyReferenceException);
         factory.atualizar(produtoASerAlterado, dto);
         repository.save(produtoASerAlterado);
@@ -53,16 +53,15 @@ public class ProdutoServiceImpl implements ProdutoService {
     }
 
     @Override
-    public void remover(Integer id) {
+    public void remover(Long id) {
         var produto = repository.findById(id).orElseThrow(this::throwPropertyReferenceException);
         repository.deleteById(produto.getId());
-
     }
 
     @Override
-    public ProdutoResponseDto atualizarEstoque(Integer id, int quantidade) {
+    public ProdutoResponseDto atualizarEstoque(Long id, int quantidade) {
         var produto = repository.findById(id).orElseThrow(this::throwPropertyReferenceException);
-        produto.setQuantidadeEstoque(produto.getQuantidadeEstoque() - quantidade) ;
+        produto.setQuantidadeEstoque(produto.getQuantidadeEstoque() - quantidade);
         return new ProdutoResponseDto(produto);
     }
 

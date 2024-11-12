@@ -1,0 +1,6 @@
+-- Sample Products
+nome;descricao;sku;preco;quantidadeEstoque;peso
+Caderno Espiral;Caderno com 200 folhas, capa dura;123ABC;12.99;150;0.5
+Caneta Esferográfica;Caneta azul de ponta fina;456DEF;2.5;500;0.02
+Calculadora Científica;Calculadora com funções avançadas;789GHI;50.0;200;0.3
+Lápis de Cor;Conjunto com 12 cores;012JKL;5.75;300;0.15
