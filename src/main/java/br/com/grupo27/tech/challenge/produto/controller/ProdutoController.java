@@ -74,7 +74,7 @@ public class ProdutoController {
         produtoService.remover(id);
     }
 
-    @PatchMapping("/atualizar/estoque/{id}/{quantidade}")
+    @PutMapping("/atualizar/estoque/{id}/{quantidade}")
     public ResponseEntity<ProdutoResponseDto> atualizarEstoue(@PathVariable Long id, @PathVariable Integer quantidade) {
 
         var produtoResponseDto = produtoService.atualizarEstoque(id, quantidade);

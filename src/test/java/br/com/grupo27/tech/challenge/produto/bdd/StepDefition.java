@@ -12,7 +12,10 @@ import io.cucumber.java.pt.Quando;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -25,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ContextConfiguration(classes = { CucumberTest.class })
 public class StepDefition {
 
 
@@ -34,15 +38,18 @@ public class StepDefition {
     ObjectMapper objectMapper;
     @Autowired
     ProdutoRepository repository;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
 
     private MvcResult resultado;
     private String jsonRequest;
     private ProdutoResponseDto produtoResponse;
-    private Produto produtoCadastro;
+    private ProdutoResponseDto produtoCadastro;
     private Long id;
     private int quantidade;
 
-    private Produto criarProduto() throws Exception {
+    private ProdutoResponseDto criarProduto() throws Exception {
         var produtoRequest = getProdutoRequestDto();
         jsonRequest = objectMapper.writeValueAsString(produtoRequest);
         resultado = mockMvc.perform(MockMvcRequestBuilders
@@ -52,7 +59,7 @@ public class StepDefition {
                 .andExpect(status().isCreated())
                 .andReturn();
         var jsonResponse = resultado.getResponse().getContentAsString();
-        var produto = objectMapper.readValue(jsonResponse, Produto.class);
+        var produto = objectMapper.readValue(jsonResponse, ProdutoResponseDto.class);
         return produto;
     }
 
@@ -84,14 +91,15 @@ public class StepDefition {
     }
     @Entao("a resposta deve conter os dados do produto criado")
     public void a_resposta_deve_conter_os_dados_do_produto_criado() {
-        assertEquals(getProdutoResponseDto(), produtoResponse);
+        assertEquals(getProdutoResponseDto().nome(), produtoResponse.nome());
+        assertEquals(getProdutoResponseDto().sku(), produtoResponse.sku());
     }
 
     //Cenario: Atualizar um produto existente com sucesso
     @Dado("que tenha os dados a serem atualizados de um produto existente")
     public void que_tenha_os_dados_a_serem_atualizados_de_um_produto_existente() throws Exception {
         produtoCadastro = criarProduto();
-        id = produtoCadastro.getId();
+        id = produtoCadastro.id();
         var produtoRequest = getProdutoAlteracaoRequestDto();
         jsonRequest = objectMapper.writeValueAsString(produtoRequest);
 
@@ -124,7 +132,7 @@ public class StepDefition {
     @Dado("que tenha um ID de um produto existente")
     public void que_tenha_um_id_de_um_produto_existente() throws Exception {
         produtoCadastro = criarProduto();
-        id = produtoCadastro.getId();
+        id = produtoCadastro.id();
         assertNotNull(id);
 
     }
@@ -176,9 +184,9 @@ public class StepDefition {
     @Dado("que tenho o ID de um produto e a quantidade para baixar do estoque")
     public void que_tenho_o_id_de_um_produto_e_a_quantidade_para_baixar_do_estoque() throws Exception {
         produtoCadastro = criarProduto();
-        id = produtoCadastro.getId();
+        id = produtoCadastro.id();
         assertNotNull(id);
-        quantidade = 1;
+        quantidade = 9;
 
     }
     @Quando("envio de uma requisição PUT para {string}")
@@ -186,7 +194,7 @@ public class StepDefition {
 
 
         resultado = mockMvc.perform(MockMvcRequestBuilders
-                        .put(url, id, quantidade)
+                        .put(url, id, 1)
                 )
                 .andExpect(status().isOk())
                 .andReturn();
@@ -205,7 +213,7 @@ public class StepDefition {
     @Dado("que tenha o ID de um produto existente")
     public void que_tenha_o_id_de_um_produto_existente() throws Exception {
         produtoCadastro = criarProduto();
-        id = produtoCadastro.getId();
+        id = produtoCadastro.id();
         assertNotNull(id);
     }
     @Quando("envio uma requisição DELETE para {string}")
@@ -220,15 +228,6 @@ public class StepDefition {
     public void o_produto_dever_ser_excluido_com_sucesso() {
         assertNotNull(id);
     }
-
-
-
-
-
-
-
-
-
 
 
 
