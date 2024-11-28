@@ -2,11 +2,14 @@ package br.com.grupo27.tech.challenge.produto.config;
 
 import br.com.grupo27.tech.challenge.produto.model.Produto;
 import br.com.grupo27.tech.challenge.produto.utils.ProdutoProcessor;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.Step;
+import org.springframework.batch.core.*;
 import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
+import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.item.ItemProcessor;
@@ -33,6 +36,7 @@ public class ImpotacaoJobConfiguration {
 
     @Autowired
     private PlatformTransactionManager transactionManager;
+
 
 
     @Bean
