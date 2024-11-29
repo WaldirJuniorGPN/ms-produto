@@ -189,12 +189,12 @@ public class StepDefition {
         quantidade = 9;
 
     }
-    @Quando("envio de uma requisição PUT para {string}")
-    public void envio_de_uma_requisição_put_para(String url) throws Exception {
+    @Quando("envio de uma requisição PATCH para {string}")
+    public void envio_de_uma_requisição_Patch_para(String url) throws Exception {
 
 
         resultado = mockMvc.perform(MockMvcRequestBuilders
-                        .put(url, id, 1)
+                        .patch(url, id, 1)
                 )
                 .andExpect(status().isOk())
                 .andReturn();

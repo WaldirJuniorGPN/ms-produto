@@ -36,5 +36,5 @@
 
     Cenario: Atualizar a quantidade de um produto em estoque
       Dado que tenho o ID de um produto e a quantidade para baixar do estoque
-      Quando envio de uma requisição PUT para "/produtos/atualizar/estoque/{id}/{quantidade}"
+      Quando envio de uma requisição PATCH para "/produtos/atualizar/estoque/{id}/{quantidade}"
       Entao quantidade do produto com id informado dever ser subtraido pela quantidade informada na requisiçao

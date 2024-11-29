@@ -1,9 +1,10 @@
 package br.com.grupo27.tech.challenge.produto.config;
 
+import br.com.grupo27.tech.challenge.produto.model.Categoria;
 import br.com.grupo27.tech.challenge.produto.model.Produto;
+import br.com.grupo27.tech.challenge.produto.model.converter.CategoriaConverter;
 import br.com.grupo27.tech.challenge.produto.utils.ProdutoProcessor;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.Step;
+import org.springframework.batch.core.*;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
@@ -13,6 +14,7 @@ import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
+import org.springframework.batch.item.database.ItemSqlParameterSourceProvider;
 import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
@@ -21,11 +23,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
 import java.io.File;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Configuration
@@ -33,6 +38,7 @@ public class ImpotacaoJobConfiguration {
 
     @Autowired
     private PlatformTransactionManager transactionManager;
+
 
 
     @Bean
@@ -64,6 +70,7 @@ public class ImpotacaoJobConfiguration {
         BeanWrapperFieldSetMapper<Produto> fieldSetMapper = new BeanWrapperFieldSetMapper<>();
         fieldSetMapper.setTargetType(Produto.class);
 
+
         return new FlatFileItemReaderBuilder<Produto>()
                 .name("leitura-csv")
                 .resource(new FileSystemResource("src\\main\\resources\\produtos.csv"))
@@ -71,7 +78,9 @@ public class ImpotacaoJobConfiguration {
                 .linesToSkip(1)
                 .delimited()
                 .delimiter(";")
-                .names("nome","descricao","sku","preco","quantidadeEstoque","peso")
+                .names("nome","descricao","sku","preco","quantidadeEstoque","peso","categoriaId",
+                        "fabricanteId", "imagemPrincipalUrl",  "imagensAdicionaisUrl",
+                        "tags","urlAmigavel","metaTitle","metaDescrition")
                 .fieldSetMapper(fieldSetMapper)
                 .build();
     }
@@ -81,11 +90,38 @@ public class ImpotacaoJobConfiguration {
         return new JdbcBatchItemWriterBuilder<Produto>()
                 .dataSource(dataSource)
                 .sql("INSERT INTO tb_produto"
-                               +"(nome,descricao,sku,preco,quantidade_estoque,peso,status)"
-                 +"values(:nome,:descricao,:sku,:preco,:quantidadeEstoque,:peso, :status)")
-                .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>())
+                               +"(nome,descricao,sku,preco,quantidade_estoque,peso, categoria_id, fabricante_id, imagem_principal_url,  imagens_adicionais_url, tags, url_amigavel, meta_title, meta_descrition, status)"
+                 +"values(:nome,:descricao,:sku,:preco,:quantidadeEstoque,:peso, :categoriaId, :fabricanteId, :imagemPrincipalUrl, :imagensAdicionaisUrl, :tags, :urlAmigavel, :metaTitle, :metaDescrition,   :status)")
+                .itemSqlParameterSourceProvider(itemSqlParameterSourceProvider())
                 .build();
     }
+
+    @Bean
+    public ItemSqlParameterSourceProvider<Produto> itemSqlParameterSourceProvider() {
+        return new BeanPropertyItemSqlParameterSourceProvider<Produto>() {
+            @Override
+            public SqlParameterSource createSqlParameterSource(Produto produto) {
+                MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+                parameterSource.addValue("nome", produto.getNome());
+                parameterSource.addValue("descricao", produto.getDescricao());
+                parameterSource.addValue("sku", produto.getSku());
+                parameterSource.addValue("preco", produto.getPreco());
+                parameterSource.addValue("quantidadeEstoque", produto.getQuantidadeEstoque());
+                parameterSource.addValue("peso", produto.getPeso());
+                parameterSource.addValue("categoriaId", produto.getCategoriaId().getCategoriaId()); // Converte enum para String
+                parameterSource.addValue("fabricanteId", produto.getFabricanteId().getFabricanteId());
+                parameterSource.addValue("imagemPrincipalUrl", produto.getImagemPrincipalUrl());
+                parameterSource.addValue("imagensAdicionaisUrl", produto.getImagensAdicionaisUrl());
+                parameterSource.addValue("tags", produto.getTags());
+                parameterSource.addValue("urlAmigavel", produto.getUrlAmigavel());
+                parameterSource.addValue("metaTitle", produto.getMetaTitle());
+                parameterSource.addValue("metaDescrition", produto.getMetaDescrition());
+                parameterSource.addValue("status", produto.isStatus());
+                return parameterSource;
+            }
+        };
+    }
+
 
     @Bean
     public ItemProcessor<Produto, Produto> itemProcessor() {
@@ -114,9 +150,8 @@ public class ImpotacaoJobConfiguration {
 
                         System.out.println("Arquivo movido: " + arquivo.getName());
 
-                        LocalDate dataHoje = LocalDate.now();
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd"); // Formato AAAAMMDD
-                        String dataFormatada = dataHoje.format(formatter);
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss"); // Formato AAAAMMDD
+                        String dataFormatada = LocalDateTime.now().format(formatter);
                         String novoNomeArquivo = "produtos_" + dataFormatada + ".csv";
                         File novoArquivo = new File(arquivoDestino.getParent(), novoNomeArquivo);
                         arquivoDestino.renameTo(novoArquivo);
