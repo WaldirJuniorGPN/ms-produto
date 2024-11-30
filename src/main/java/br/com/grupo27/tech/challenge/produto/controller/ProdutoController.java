@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import static org.springframework.http.HttpStatus.NO_CONTENT;
@@ -74,6 +75,7 @@ public class ProdutoController {
         produtoService.remover(id);
     }
 
+
     @PatchMapping("/atualizar/estoque/{id}/{quantidade}")
     public ResponseEntity<ProdutoResponseDto> atualizarEstoue(@PathVariable Long id, @PathVariable Integer quantidade) {
 
@@ -82,10 +84,19 @@ public class ProdutoController {
         return ResponseEntity.ok(produtoResponseDto);
     }
 
-    @GetMapping("/importacao")
-    public void importaArquivo() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
-        JobParameters jobParameters = new JobParameters();
-        jobLauncher.run(job, jobParameters);
+    @PostMapping("/importacao")
+    public ResponseEntity<String> upload(@RequestParam("file") MultipartFile arquivo) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+
+        var retorno = produtoService.uploadArquivoCsv(arquivo);
+
+        if (retorno == "Arquivo importado com sucesso") {
+            JobParameters jobParameters = new JobParameters();
+            jobLauncher.run(job, jobParameters);
+
+            return ResponseEntity.ok("Arquivo importado com sucesso");
+        } else{
+            return ResponseEntity.badRequest().body("Erro ao importar arquivo");
+        }
     }
 }
 

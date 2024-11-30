@@ -12,7 +12,15 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Service
 @RequiredArgsConstructor
@@ -63,6 +71,29 @@ public class ProdutoServiceImpl implements ProdutoService {
         var produto = repository.findById(id).orElseThrow(this::throwPropertyReferenceException);
         produto.setQuantidadeEstoque(produto.getQuantidadeEstoque() - quantidade);
         return new ProdutoResponseDto(produto);
+    }
+
+    @Override
+    public String uploadArquivoCsv(MultipartFile file) {
+
+        if(file.isEmpty()){
+            return "O arquivo está vazio";
+        }
+
+        try{
+            File  pastaDestino= new File("src\\main\\resources");
+            Path diretorio = Paths.get(pastaDestino.toURI());
+            Path caminhoDoArquivo =diretorio.resolve(file.getOriginalFilename());
+
+            Files.write(caminhoDoArquivo, file.getBytes());
+
+        return "Arquivo importado com sucesso";
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "Erro ao importar arquivo";
+        }
+
+
     }
 
     private ControllerPropertyReferenceException throwPropertyReferenceException() {

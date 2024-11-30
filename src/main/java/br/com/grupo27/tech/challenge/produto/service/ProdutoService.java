@@ -5,6 +5,7 @@ import br.com.grupo27.tech.challenge.produto.model.dto.request.ProdutoRequestDto
 import br.com.grupo27.tech.challenge.produto.model.dto.response.ProdutoResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface ProdutoService {
 
@@ -19,4 +20,7 @@ public interface ProdutoService {
     void remover(Long id);
 
     ProdutoResponseDto atualizarEstoque(Long id, int quantidade);
+
+    String uploadArquivoCsv(MultipartFile file);
+
 }
