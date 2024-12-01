@@ -54,7 +54,7 @@ public class ImpotacaoJobConfiguration {
                      ItemProcessor<Produto, Produto> itemProcessor,
                      JobRepository jobRepository) {
         return new StepBuilder("step", jobRepository)
-                .<Produto, Produto>chunk(1, transactionManager)
+                .<Produto, Produto>chunk(500, transactionManager)
                 .reader(itemReader)
                 .processor(itemProcessor)
                 .writer(itemWriter)
