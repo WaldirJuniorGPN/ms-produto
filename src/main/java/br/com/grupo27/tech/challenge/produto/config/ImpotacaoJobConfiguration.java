@@ -1,10 +1,9 @@
 package br.com.grupo27.tech.challenge.produto.config;
 
-import br.com.grupo27.tech.challenge.produto.model.Categoria;
 import br.com.grupo27.tech.challenge.produto.model.Produto;
-import br.com.grupo27.tech.challenge.produto.model.converter.CategoriaConverter;
 import br.com.grupo27.tech.challenge.produto.utils.ProdutoProcessor;
-import org.springframework.batch.core.*;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
@@ -29,7 +28,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
 import java.io.File;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -56,7 +54,7 @@ public class ImpotacaoJobConfiguration {
                      ItemProcessor<Produto, Produto> itemProcessor,
                      JobRepository jobRepository) {
         return new StepBuilder("step", jobRepository)
-                .<Produto, Produto>chunk(20, transactionManager)
+                .<Produto, Produto>chunk(1, transactionManager)
                 .reader(itemReader)
                 .processor(itemProcessor)
                 .writer(itemWriter)

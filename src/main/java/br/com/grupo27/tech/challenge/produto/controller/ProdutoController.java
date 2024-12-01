@@ -5,14 +5,10 @@ import br.com.grupo27.tech.challenge.produto.model.dto.response.ProdutoResponseD
 import br.com.grupo27.tech.challenge.produto.service.ProdutoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersInvalidException;
-import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -29,11 +25,6 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 public class ProdutoController {
 
     private final ProdutoService produtoService;
-
-    @Autowired
-    private JobLauncher jobLauncher;
-    @Autowired
-    private Job job;
 
     @PostMapping
     public ResponseEntity<ProdutoResponseDto> cadastrar(@RequestBody @Valid ProdutoRequestDto dto,
@@ -87,16 +78,14 @@ public class ProdutoController {
     @PostMapping("/importacao")
     public ResponseEntity<String> upload(@RequestParam("file") MultipartFile arquivo) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
 
-        var retorno = produtoService.uploadArquivoCsv(arquivo);
-
-        if (retorno == "Arquivo importado com sucesso") {
-            JobParameters jobParameters = new JobParameters();
-            jobLauncher.run(job, jobParameters);
-
-            return ResponseEntity.ok("Arquivo importado com sucesso");
-        } else{
+        try {
+            produtoService.uploadArquivoCsv(arquivo);
+            produtoService.startJob();
+        } catch (Exception e) {
             return ResponseEntity.badRequest().body("Erro ao importar arquivo");
         }
+
+        return ResponseEntity.ok("Arquivo importado com sucesso");
     }
 }
 

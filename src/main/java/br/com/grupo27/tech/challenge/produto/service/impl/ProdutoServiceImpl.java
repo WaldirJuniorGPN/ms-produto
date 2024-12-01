@@ -9,26 +9,43 @@ import br.com.grupo27.tech.challenge.produto.repository.ProdutoRepository;
 import br.com.grupo27.tech.challenge.produto.service.ProdutoService;
 import br.com.grupo27.tech.challenge.produto.utils.ConstantesUtils;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersInvalidException;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
+import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
+import org.springframework.batch.core.repository.JobRestartException;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static br.com.grupo27.tech.challenge.produto.utils.ConstantesUtils.ARQUIVO_VAZIO;
+import static br.com.grupo27.tech.challenge.produto.utils.ConstantesUtils.QUANTIDADE_ESTOQUE_NEGATIVA;
+
 @Service
-@RequiredArgsConstructor
 public class ProdutoServiceImpl implements ProdutoService {
 
 
     private final ProdutoRepository repository;
     private final EntityFactory<Produto, ProdutoRequestDto> factory;
+    private final JobLauncher jobLauncher;
+    private final Job job;
+
+    public ProdutoServiceImpl(ProdutoRepository repository, EntityFactory<Produto, ProdutoRequestDto> factory, JobLauncher jobLauncher, @Qualifier("job") Job job) {
+        this.repository = repository;
+        this.factory = factory;
+        this.jobLauncher = jobLauncher;
+        this.job = job;
+    }
 
     @Override
     @Transactional
@@ -70,30 +87,36 @@ public class ProdutoServiceImpl implements ProdutoService {
     public ProdutoResponseDto atualizarEstoque(Long id, int quantidade) {
         var produto = repository.findById(id).orElseThrow(this::throwPropertyReferenceException);
         produto.setQuantidadeEstoque(produto.getQuantidadeEstoque() - quantidade);
+        if (produto.getQuantidadeEstoque() < 0) {
+            throw new ControllerPropertyReferenceException(QUANTIDADE_ESTOQUE_NEGATIVA);
+        }
+        repository.save(produto);
         return new ProdutoResponseDto(produto);
     }
 
     @Override
-    public String uploadArquivoCsv(MultipartFile file) {
+    public void uploadArquivoCsv(MultipartFile file) throws IOException {
 
         if(file.isEmpty()){
-            return "O arquivo está vazio";
+            throw new ControllerPropertyReferenceException(ARQUIVO_VAZIO);
         }
 
         try{
-            File  pastaDestino= new File("src\\main\\resources");
-            Path diretorio = Paths.get(pastaDestino.toURI());
-            Path caminhoDoArquivo =diretorio.resolve(file.getOriginalFilename());
+            var pastaDestino= new File("src\\main\\resources");
+            var diretorio = Paths.get(pastaDestino.toURI());
+            var caminhoDoArquivo = diretorio.resolve("produtos.csv");
 
             Files.write(caminhoDoArquivo, file.getBytes());
-
-        return "Arquivo importado com sucesso";
         } catch (IOException e) {
-            e.printStackTrace();
-            return "Erro ao importar arquivo";
+            throw e;
         }
+    }
 
-
+    @Async
+    @Override
+    public void startJob() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+        var jobParameters = new JobParameters();
+        jobLauncher.run(job, jobParameters);
     }
 
     private ControllerPropertyReferenceException throwPropertyReferenceException() {
