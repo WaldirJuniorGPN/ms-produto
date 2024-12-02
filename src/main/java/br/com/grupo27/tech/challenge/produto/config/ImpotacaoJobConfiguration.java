@@ -40,11 +40,13 @@ public class ImpotacaoJobConfiguration {
 
 
     @Bean
-    public Job job(Step step, JobRepository jobRepository) {
+    public Job job(Step step,
+                   Step moverArquivosStep,
+                   JobRepository jobRepository) {
         return new JobBuilder("Importacao-produto", jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .start(step)
-                .next(moverArquivosStep(jobRepository))
+                .next(moverArquivosStep)
                 .build();
     }
 
@@ -54,7 +56,7 @@ public class ImpotacaoJobConfiguration {
                      ItemProcessor<Produto, Produto> itemProcessor,
                      JobRepository jobRepository) {
         return new StepBuilder("step", jobRepository)
-                .<Produto, Produto>chunk(500, transactionManager)
+                .<Produto, Produto>chunk(200, transactionManager)
                 .reader(itemReader)
                 .processor(itemProcessor)
                 .writer(itemWriter)
