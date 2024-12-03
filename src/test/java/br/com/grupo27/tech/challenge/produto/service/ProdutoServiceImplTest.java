@@ -4,7 +4,6 @@ import br.com.grupo27.tech.challenge.produto.exception.ControllerPropertyReferen
 import br.com.grupo27.tech.challenge.produto.factory.EntityFactory;
 import br.com.grupo27.tech.challenge.produto.model.Produto;
 import br.com.grupo27.tech.challenge.produto.model.dto.request.ProdutoRequestDto;
-import br.com.grupo27.tech.challenge.produto.model.dto.response.ProdutoResponseDto;
 import br.com.grupo27.tech.challenge.produto.repository.ProdutoRepository;
 import br.com.grupo27.tech.challenge.produto.service.impl.ProdutoServiceImpl;
 import org.junit.jupiter.api.AfterEach;
@@ -13,20 +12,38 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.mock.web.MockMultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
-import static br.com.grupo27.tech.challenge.produto.mock.ProdutoDados.*;
+import static br.com.grupo27.tech.challenge.produto.mock.ProdutoDados.getProduto;
+import static br.com.grupo27.tech.challenge.produto.mock.ProdutoDados.getProduto2;
+import static br.com.grupo27.tech.challenge.produto.mock.ProdutoDados.getProdutoRequestDto;
+import static br.com.grupo27.tech.challenge.produto.mock.ProdutoDados.getProdutoResponseDto;
+import static br.com.grupo27.tech.challenge.produto.mock.ProdutoDados.getProdutoResponseDto2;
+import static br.com.grupo27.tech.challenge.produto.utils.ConstantesUtils.ARQUIVO_VAZIO;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-public class ProdutoServiceImplTest {
+class ProdutoServiceImplTest {
 
     @InjectMocks
     private ProdutoServiceImpl service;
@@ -36,6 +53,12 @@ public class ProdutoServiceImplTest {
 
     @Mock
     private ProdutoRepository repository;
+
+    @Mock
+    private JobLauncher jobLauncher;
+
+    @Mock
+    private Job job;
 
     AutoCloseable openMocks;
 
@@ -175,5 +198,37 @@ public class ProdutoServiceImplTest {
         verify(repository, times(1)).findById(id);
         verify(repository, never()).deleteById(id);
 
+    }
+
+    @Test
+    void uploadArquivoCsvWithValidFile() throws IOException {
+        var file = new MockMultipartFile("file", "produto.csv", "text/csv", "content".getBytes());
+
+        service.uploadArquivoCsv(file);
+
+        var path = Paths.get("src\\main\\resources\\produto.csv");
+        assertTrue(Files.exists(path));
+        Files.delete(path);
+    }
+
+    @Test
+    void uploadArquivoCsvWithEmptyFile() {
+        var file = new MockMultipartFile("file", "produto.csv", "text/csv", new byte[0]);
+
+        var exception = assertThrows(
+                ControllerPropertyReferenceException.class,
+                () -> service.uploadArquivoCsv(file)
+        );
+
+        assertEquals(ARQUIVO_VAZIO, exception.getMessage());
+    }
+
+    @Test
+    void startJobSuccessfully() throws Exception {
+        when(jobLauncher.run(any(Job.class), any(JobParameters.class))).thenReturn(null);
+
+        service.startJob();
+
+        verify(jobLauncher, times(1)).run(any(Job.class), any(JobParameters.class));
     }
 }

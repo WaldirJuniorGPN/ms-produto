@@ -62,11 +62,11 @@ mvn test
 Executar os testes integrados:
 
 ```bash
-mvn test - P integration-test
+mvn test -P integration-test
 ```
 
 Executar os testes de sistemas:
 
 ```bash
-mvn test - P system-test
+mvn test -P system-test
 ```
